@@ -13,6 +13,8 @@ public interface IJobRepository
 
     Task<DateTimeOffset?> TryRenewLeaseAsync(long jobId, string instanceId, int leaseSeconds, CancellationToken ct);
 
+    Task MarkRunningAsync(long jobId, string instanceId, CancellationToken ct);
+    
     Task MarkSucceededAsync(long jobId, string instanceId, CancellationToken ct);
 
     Task MarkFailedOrRetryAsync(long jobId, string instanceId, Exception ex,

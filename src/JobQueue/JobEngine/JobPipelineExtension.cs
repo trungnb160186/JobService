@@ -10,7 +10,7 @@ public static class JobPipelineExtension
     {
         var opts = new WorkerPoolOptions();
         configure?.Invoke(opts);
-        var queue = new TrackableChannel<JobEnvelope>(opts.ChannelCapacity);
+        var queue = new TrackableChannel<JobEnvelope>();
         services.AddSingleton(queue);
         services.AddHostedService(provider =>
         {

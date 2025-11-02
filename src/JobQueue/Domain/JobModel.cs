@@ -1,6 +1,6 @@
 namespace AutoMealAllocation.Domain;
 
-public enum JobStatus : byte { Pending = 0, Running = 1, Succeeded = 2, Failed = 3, Dead = 4, Cancel = 5 }
+public enum JobStatus : byte { Queued = 0, Pending = 1, Running = 2, Succeeded = 3, Failed = 4, Dead = 5, Cancel = 6 }
 
 public sealed record Job(
     long JobId,

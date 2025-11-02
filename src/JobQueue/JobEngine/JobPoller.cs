@@ -14,22 +14,32 @@ public sealed class JobPoller(ILogger<JobPoller> log, IJobRepository repo, Track
     {
         var revived = await _repo.ReviveJobsAsync(_queue.Options.Type, ct);
         if (revived > 0) _log.LogWarning("Revived {Count} stuck jobs", revived);
-        _log.LogInformation("[{Pool}] Poller start (types={Types})", _queue.Options.Name, string.Join(",", _queue.Options.Type));
+        _log.LogInformation("[{Pool}] Poller start (type={Type})", _queue.Options.Name, string.Join(",", _queue.Options.Type));
 
         while (!ct.IsCancellationRequested)
         {
             try
             {
-                if (!await _queue.Ch.Writer.WaitToWriteAsync(ct))
-                    continue;
+                var used = _queue.Pending + _queue.InProgress;
+                var cap = _queue.Options.Capacity;
+                var free = Math.Max(0, cap - used);
+                var toClaim = Math.Min(_queue.Options.BatchSize, free);
 
-                var rows = await _repo.ClaimJobsByTypesAsync([_queue.Options.Type], _queue.Options.BatchSize, _instanceId, _queue.Options.LeaseSeconds, ct);
+                if (toClaim <= 0 || !await _queue.Ch.Writer.WaitToWriteAsync(ct))
+                {
+                    continue;
+                }
+
+                var rows = await _repo.ClaimJobsByTypesAsync([_queue.Options.Type], toClaim, _instanceId, _queue.Options.LeaseSeconds, ct);
                 foreach (var row in rows)
-                    // await _queue.Ch.Writer.WriteAsync(new JobEnvelope(row), ct);
+                {
                     await _queue.EnqueueAsync(new JobEnvelope(row), ct);
+                }
 
                 if (rows.Count == 0)
+                {
                     await Task.Delay(_queue.Options.PollInterval, ct);
+                }    
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
             catch (Exception ex)

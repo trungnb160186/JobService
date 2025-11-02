@@ -7,9 +7,10 @@ public class ChannelOptions
 {
     public string Type { get; set; } = "AllocationRequest";
     public string Name { get; set; } = "AllocationRequestChannel";
+    public int Capacity { get; set; } = 10;
     public int BatchSize { get; set; } = 500;
     public int LeaseSeconds { get; set; } = 180;
-    public TimeSpan PollInterval { get; set; } = TimeSpan.FromMilliseconds(250);
+    public TimeSpan PollInterval { get; set; } = TimeSpan.FromMilliseconds(1000);
     public TimeSpan RenewSafetyMargin { get; set; } = TimeSpan.FromSeconds(10);
 }
 
@@ -23,11 +24,11 @@ public sealed class TrackableChannel<T>
     public int Pending => Volatile.Read(ref _pending);
     public int InProgress => Volatile.Read(ref _inProgress);
 
-    public TrackableChannel(int capacity, bool singleReader = false, bool singleWriter = false, ChannelOptions? opts = null)
+    public TrackableChannel(bool singleReader = false, bool singleWriter = false, ChannelOptions? opts = null)
     {
         Options = opts ?? new ChannelOptions();
         {
-            var opt = new BoundedChannelOptions(capacity)
+            var opt = new BoundedChannelOptions(Options.Capacity)
             {
                 FullMode = BoundedChannelFullMode.Wait,
                 SingleReader = singleReader,
@@ -40,8 +41,15 @@ public sealed class TrackableChannel<T>
     public async ValueTask EnqueueAsync(T item, CancellationToken ct = default)
     {
         Interlocked.Increment(ref _pending);
-        try { await Ch.Writer.WriteAsync(item, ct); }
-        catch { Interlocked.Decrement(ref _pending); throw; }
+        try 
+        { 
+            await Ch.Writer.WriteAsync(item, ct); 
+        }
+        catch 
+        { 
+            Interlocked.Decrement(ref _pending); 
+            throw; 
+        }
     }
 
     internal void MarkStart() => Interlocked.Decrement(ref _pending);

@@ -24,7 +24,7 @@ public sealed class JobRepository(IDbConnectionFactory factory) : IJobRepository
             {
                 type = req.Type,
                 payload = JsonSerializer.Serialize(req.Payload),
-                status = JobStatus.Pending,
+                status = JobStatus.Queued,
                 maxAttempts = req.MaxAttempts,
                 priority = req.Priority,
                 scheduledAt = req.ScheduledAt,
@@ -107,7 +107,7 @@ public sealed class JobRepository(IDbConnectionFactory factory) : IJobRepository
                UpdatedAt   = SYSUTCDATETIME()
          OUTPUT INSERTED.LockedUntil
          WHERE JobId      = @id
-           AND Status     = 1
+           AND Status     = 2
            AND LockedBy   = @me
            AND LockedUntil > SYSUTCDATETIME();
         """;
@@ -119,11 +119,22 @@ public sealed class JobRepository(IDbConnectionFactory factory) : IJobRepository
         return newUntil is null ? null : new DateTimeOffset(DateTime.SpecifyKind(newUntil.Value, DateTimeKind.Utc));
     }
 
+    public async Task MarkRunningAsync(long jobId, string instanceId, CancellationToken ct)
+    {
+        const string sql = """
+        UPDATE dbo.Jobs
+           SET Status = 2, UpdatedAt = SYSUTCDATETIME()
+        WHERE JobId = @id AND LockedBy = @me;
+        """;
+        using var con = await _factory.CreateOpenConnectionAsync(ct);
+        await con.ExecuteAsync(new CommandDefinition(sql, new { id = jobId, me = instanceId }, cancellationToken: ct));
+    }
+
     public async Task MarkSucceededAsync(long jobId, string instanceId, CancellationToken ct)
     {
         const string sql = """
         UPDATE dbo.Jobs
-           SET Status = 2, LockedBy = NULL, LockedUntil = NULL, UpdatedAt = SYSUTCDATETIME()
+           SET Status = 3, LockedBy = NULL, LockedUntil = NULL, UpdatedAt = SYSUTCDATETIME()
          WHERE JobId = @id AND LockedBy = @me;
         """;
         using var con = await _factory.CreateOpenConnectionAsync(ct);
@@ -159,7 +170,7 @@ public sealed class JobRepository(IDbConnectionFactory factory) : IJobRepository
         const string sql = """
         UPDATE dbo.Jobs
            SET Status = 0, LockedBy = NULL, LockedUntil = NULL, UpdatedAt = SYSUTCDATETIME()
-         WHERE Status = 1 AND Type = @type AND (LockedUntil IS NULL OR LockedUntil < SYSUTCDATETIME());
+         WHERE Status = 2 AND Type = @type AND (LockedUntil IS NULL OR LockedUntil < SYSUTCDATETIME());
         SELECT @@ROWCOUNT;
         """;
         using var con = await _factory.CreateOpenConnectionAsync(ct);

@@ -45,7 +45,10 @@ public sealed class AdaptiveWorkerPool
 
     public async Task StartAsync(CancellationToken ct = default)
     {
-        for (int i = 0; i < _opts.MinWorkers; i++) StartWorker();
+        for (int i = 0; i < _opts.MinWorkers; i++)
+        {
+            StartWorker();
+        }
         _controller = Task.Run(ControllerLoopAsync, ct);
         _log.LogInformation("[{Name}] Integrated pool started (min={Min}, max={Max}, inner={Inner})",
             _opts.Name, _opts.MinWorkers, _opts.MaxWorkers, _opts.InnerConcurrency);
@@ -55,11 +58,21 @@ public sealed class AdaptiveWorkerPool
     public async Task StopAsync(CancellationToken ct = default)
     {
         _stop.Cancel();
-        if (_controller != null) { try { await _controller; } catch { } }
+        if (_controller != null) 
+        { 
+            try { await _controller; } catch { } 
+        }
         List<(Task task, CancellationTokenSource cts)> copy;
         lock (_gate) copy = [.. _workers];
-        foreach (var (task, cts) in copy) cts.Cancel();
-        try { await Task.WhenAll(copy.Select(w => w.task)); } catch { }
+        foreach (var (task, cts) in copy)
+        {
+            cts.Cancel();
+        }
+        try 
+        { 
+            await Task.WhenAll(copy.Select(w => w.task)); 
+        } 
+        catch { }
         _log.LogInformation("[{Name}] Integrated pool stopped", _opts.Name);
     }
 
@@ -146,22 +159,21 @@ public sealed class AdaptiveWorkerPool
                     var done = await Task.WhenAny(inProgress);
                     inProgress.Remove(done);
                     try { await done; } catch { }
+                    continue;
                 }
-                else
+               
+                if (reader.TryRead(out var env))
                 {
-                    if (reader.TryRead(out var env))
+                    _q.MarkStart();
+                    _q.MarkEnter();
+
+                    var t = ProcessAsync(env, ct).ContinueWith(static (ante, state) =>
                     {
-                        _q.MarkStart();
-                        _q.MarkEnter();
+                        var q = (TrackableChannel<JobEnvelope>)state!;
+                        q.MarkLeave();
+                    }, _q, TaskScheduler.Default);
 
-                        var t = ProcessOneAsync(env, ct).ContinueWith(static (ante, state) =>
-                        {
-                            var q = (TrackableChannel<JobEnvelope>)state!;
-                            q.MarkLeave();
-                        }, _q, TaskScheduler.Default);
-
-                        inProgress.Add(t);
-                    }
+                    inProgress.Add(t);
                 }
             }
         }
@@ -177,7 +189,7 @@ public sealed class AdaptiveWorkerPool
         }
     }
 
-    private async Task ProcessOneAsync(JobEnvelope env, CancellationToken ct)
+    private async Task ProcessAsync(JobEnvelope env, CancellationToken ct)
     {
         using var renewCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         var renew = RenewLeaseLoopAsync(env.Job.JobId, renewCts.Token);
@@ -185,6 +197,8 @@ public sealed class AdaptiveWorkerPool
         {
             var handler = _resolver.Resolve(env.Job.Type) ??
             throw new InvalidOperationException($"No handler for type '{env.Job.Type}'");
+
+            await _repo.MarkRunningAsync(env.Job.JobId,_instanceId, ct);
             await handler.HandleAsync(env.Job.PayloadJson, ct);
             await _repo.MarkSucceededAsync(env.Job.JobId, _instanceId, ct);
         }
