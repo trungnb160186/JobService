@@ -176,4 +176,19 @@ public sealed class JobRepository(IDbConnectionFactory factory) : IJobRepository
         using var con = await _factory.CreateOpenConnectionAsync(ct);
         return await con.ExecuteScalarAsync<int>(new CommandDefinition(sql, new { type }, cancellationToken: ct));
     }
+
+    public async Task<int> CountQueuedAsync(CancellationToken ct)
+    {
+        const string sql = """
+          SELECT COUNT(*)
+          FROM dbo.Jobs
+          WHERE Status = @status
+            AND ScheduledAt <= SYSUTCDATETIME()
+            AND (NextRunAt IS NULL OR NextRunAt <= SYSUTCDATETIME())
+        """;
+
+        using var con = await _factory.CreateOpenConnectionAsync(ct);
+        var count = await con.ExecuteScalarAsync<int>(new CommandDefinition(sql, new {status = JobStatus.Queued }, cancellationToken: ct));
+        return count;
+    }
 }

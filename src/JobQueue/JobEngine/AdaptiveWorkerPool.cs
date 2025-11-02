@@ -86,7 +86,7 @@ public sealed class AdaptiveWorkerPool
         _log.LogInformation("[{Name}] Start worker (active={Active})", _opts.Name, ActiveWorkers);
     }
 
-    private void StopOneWorker()
+    private void StopWorker()
     {
         lock (_gate)
         {
@@ -128,7 +128,7 @@ public sealed class AdaptiveWorkerPool
                     idle++;
                     if (idle >= _opts.IdleCyclesBeforeScaleDown)
                     {
-                        StopOneWorker();
+                        StopWorker();
                         idle = 0;
                     }
                 }

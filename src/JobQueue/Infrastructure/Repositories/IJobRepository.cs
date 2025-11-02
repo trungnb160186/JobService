@@ -21,4 +21,6 @@ public interface IJobRepository
                                 Func<int, TimeSpan> backoff, CancellationToken ct);
 
     Task<int> ReviveJobsAsync(string? type, CancellationToken ct);
+
+    Task<int> CountQueuedAsync(CancellationToken ct);
 }

@@ -26,6 +26,9 @@ builder.Services.AddJobPipelineIntegrated(
         opts.IdleCyclesBeforeScaleDown = 60;
     });
 
+// Metrics reporter
+builder.Services.AddHostedService<JobMetricsReporter>();
+
 // Web
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
