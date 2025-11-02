@@ -1,4 +1,4 @@
-namespace JobQueue.Processing;
+namespace AutoMealAllocation.Processing;
 
 public interface IJobHandler
 {

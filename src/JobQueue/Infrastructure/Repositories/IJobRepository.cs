@@ -1,6 +1,6 @@
-using JobQueue.Domain;
+using AutoMealAllocation.Domain;
 
-namespace JobQueue.Infrastructure.Repositories;
+namespace AutoMealAllocation.Infrastructure.Repositories;
 
 public interface IJobRepository
 {

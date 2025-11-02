@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace JobQueue.Processing;
+namespace AutoMealAllocation.Processing;
 
 public abstract class JobHandler<T> : IJobHandler<T>
 {

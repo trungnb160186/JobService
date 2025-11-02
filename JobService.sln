@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JobQueue", "src\JobQueue\JobQueue.csproj", "{6557E959-8137-4ACD-90CA-39BB57DAFBD4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoMealAllocation", "src\JobQueue\AutoMealAllocation.csproj", "{6557E959-8137-4ACD-90CA-39BB57DAFBD4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,5 +35,8 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{6557E959-8137-4ACD-90CA-39BB57DAFBD4} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F7E0E9AD-F02D-4FED-BC20-B969C71EFF39}
 	EndGlobalSection
 EndGlobal

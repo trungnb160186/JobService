@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace JobQueue.Domain;
+namespace AutoMealAllocation.Domain;
 
 public sealed record JobRequest(
     string Type,

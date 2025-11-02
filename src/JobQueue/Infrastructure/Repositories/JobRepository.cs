@@ -1,10 +1,10 @@
-using System.Text.Json;
 using Dapper;
-using JobQueue.Domain;
-using JobQueue.Infrastructure.Db;
+using System.Text.Json;
 using Microsoft.Data.SqlClient;
+using AutoMealAllocation.Domain;
+using AutoMealAllocation.Infrastructure.Db;
 
-namespace JobQueue.Infrastructure.Repositories;
+namespace AutoMealAllocation.Infrastructure.Repositories;
 
 public sealed class JobRepository(IDbConnectionFactory factory) : IJobRepository
 {

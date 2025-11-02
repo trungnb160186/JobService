@@ -1,10 +1,8 @@
-using System.Threading.Channels;
-using JobQueue.Domain;
-using JobQueue.Infrastructure.Db;
-using JobQueue.Infrastructure.Repositories;
-using JobQueue.JobEngine;
-using JobQueue.Processing;
-using JobQueue.Endpoints;
+using AutoMealAllocation.JobEngine;
+using AutoMealAllocation.Endpoints;
+using AutoMealAllocation.Processing;
+using AutoMealAllocation.Infrastructure.Db;
+using AutoMealAllocation.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,17 +15,16 @@ builder.Services.AddSingleton<IJobHandler, AllocationHandler>();
 builder.Services.AddSingleton<JobHandlerRegistry>();
 
 // Hosted services
-builder.Services.AddJobPool(
-    name: "allocation-pool",
-    types: [nameof(AllocationRequest)],
+builder.Services.AddJobPipelineIntegrated(
     configure: opts =>
     {
-        opts.WorkerCount = 5;
-        opts.ChannelCapacity = 20;
-        opts.PollBatchSize = 10;
-        opts.LeaseSeconds = 300;
-        opts.PollInterval = TimeSpan.FromMilliseconds(500);
-        opts.RenewSafetyMargin = TimeSpan.FromSeconds(10);
+        opts.MinWorkers = 1;
+        opts.MaxWorkers = 5;
+        opts.ChannelCapacity = 10;
+        opts.InnerConcurrency = 2;
+        opts.ShutdownDrainTimeout = TimeSpan.FromSeconds(20);
+        opts.ScaleInterval = TimeSpan.FromMilliseconds(5000);
+        opts.IdleCyclesBeforeScaleDown = 3;
     });
 
 // Web

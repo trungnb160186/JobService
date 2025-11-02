@@ -1,6 +1,6 @@
-using JobQueue.Domain;
+using AutoMealAllocation.Domain;
 
-namespace JobQueue.Processing;
+namespace AutoMealAllocation.Processing;
 
 public sealed class AllocationHandler(ILogger<AllocationHandler> log) : JobHandler<AllocationRequest>
 {

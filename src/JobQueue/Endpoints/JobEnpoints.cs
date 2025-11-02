@@ -1,9 +1,9 @@
-using System.Text.Json;
 using Dapper;
-using JobQueue.Domain;
-using JobQueue.Infrastructure.Repositories;
+using AutoMealAllocation.Domain;
+using AutoMealAllocation.Infrastructure.Db;
+using AutoMealAllocation.Infrastructure.Repositories;
 
-namespace JobQueue.Endpoints;
+namespace AutoMealAllocation.Endpoints;
 
 public static class JobEndpoints
 {
@@ -16,7 +16,7 @@ public static class JobEndpoints
             return Results.Accepted($"/job/{id}");
         });
 
-        app.MapGet("/job/{id:long}", async (long id, JobQueue.Infrastructure.Db.IDbConnectionFactory dbf, CancellationToken ct) =>
+        app.MapGet("/job/{id:long}", async (long id, IDbConnectionFactory dbf, CancellationToken ct) =>
         {
             const string sql = "SELECT * FROM dbo.Jobs WHERE JobId = @id";
             using var con = await dbf.CreateOpenConnectionAsync(ct);

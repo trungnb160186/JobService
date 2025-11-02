@@ -1,4 +1,4 @@
-namespace JobQueue.Processing;
+namespace AutoMealAllocation.Processing;
 
 public sealed class JobHandlerRegistry(IEnumerable<IJobHandler> handlers)
 {

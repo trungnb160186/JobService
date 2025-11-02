@@ -1,7 +1,7 @@
 using System.Data;
 using Microsoft.Data.SqlClient;
 
-namespace JobQueue.Infrastructure.Db;
+namespace AutoMealAllocation.Infrastructure.Db;
 
 public interface IDbConnectionFactory
 {
